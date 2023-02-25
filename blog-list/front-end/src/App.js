@@ -4,8 +4,8 @@ import authServices from "./services/auth";
 import Loginform from "./components/Loginform";
 import { getAllUsers } from "./services/users";
 import Blogs from "./components/Blogs";
-// import Blogform from "./components/Blogform";
-// import Togglable from "./components/Togglable";
+import Blogform from "./components/Blogform";
+import Togglable from "./components/Togglable";
 import { useMutation, useQueryClient } from "react-query";
 import { useStoredUser, useUserDispatch } from "./contexts/authContext";
 import {
@@ -29,7 +29,7 @@ const App = () => {
   const user = useStoredUser();
   const dispatchUser = useUserDispatch();
 
-  const users = useQuery("Users", getAllUsers);
+  const users = useQuery("users", getAllUsers);
   const blogs = useQuery("blogs", blogService.getAll);
 
   const userMatch = useMatch("/users/:id");
@@ -47,11 +47,6 @@ const App = () => {
       : null;
   }
 
-  // const newBlogMutation = useMutation(blogService.create, {
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries("blogs");
-  //   },
-  // });
 
   const updateMutation = useMutation(blogService.update, {
     onSuccess: () => {
@@ -63,6 +58,13 @@ const App = () => {
     onSuccess: () => {
       queryClient.invalidateQueries("blogs");
     },
+  });
+
+  const newBlogMutation = useMutation(blogService.create,{
+    onSuccess: () => {
+      queryClient.invalidateQueries("blogs");
+      queryClient.invalidateQueries("users");
+    }
   });
 
   const handleLogin = async (event) => {
@@ -94,9 +96,9 @@ const App = () => {
     blogService.setToken("");
   };
 
-  // const createBlog = async (newBlog) => {
-  //   newBlogMutation.mutate(newBlog);
-  // };
+  const createBlog = async (newBlog) => {
+    newBlogMutation.mutate(newBlog);
+  };
 
   const handleDelete = async (id) => {
     deleteMutation.mutate(id);
@@ -138,14 +140,19 @@ const App = () => {
             <Route
               path="/"
               element={
-                <Blogs
-                  blogs={blogs.data ? blogs.data : []}
-                  user={user}
-                  handleDelete={handleDelete}
-                  handleLike={handleLike}
-                  isLoading={blogs.isLoading}
-                  isError={blogs.isError}
-                />
+                <>
+                  <Blogs
+                    blogs={blogs.data ? blogs.data : []}
+                    user={user}
+                    handleDelete={handleDelete}
+                    handleLike={handleLike}
+                    isLoading={blogs.isLoading}
+                    isError={blogs.isError}
+                  />
+                  <Togglable buttonLabel={"create"}>
+                    <Blogform createBlog={createBlog} />
+                  </Togglable>
+                </>
               }
             />
             <Route
